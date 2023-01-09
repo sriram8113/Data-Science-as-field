@@ -1,0 +1,412 @@
+---
+title: "Analysis of Customer Data using K-means Clustering "
+subtitle: "Application Area Project"
+author: 
+  - Sriram Reddy Arabelli
+  - Vamsi Gontu
+  - Sanyukta Nair
+  - Roja Kuchipudi
+  - Annanya Jain
+  - Shubhankar Goje
+format: 
+  html:
+    toc: true
+    smooth-scroll: true
+editor: visual
+---
+
+## Introduction
+
+Data has recently become one of the most important driving forces behind running a successful business. There is an unfathomable amount of big data available from various sources, including web databases and social media. Marketing professionals could benefit greatly from this massive amount of data if it can be properly processed and analyzed. They can use this processed data as a tool in their business venture by using it to gain valuable insights into their target customers.
+
+The practice of data science is employing cutting-edge technologies to explore and analyze a vast quantity of data. It gathers data in a more sophisticated and organized manner, and it organizes that data. Data science is used in business to pinpoint external factors that might directly or indirectly affect company's operations and income. Data science and digital marketing work hand in hand because it is such a crucial aspect in operating a firm. We may utilize data analytics and data science to create marketing plans that will work for the business since they can anticipate market trends and, in general, make practical future predictions about how the firm will perform in the future.
+
+## Motivation
+
+Faster service and personalization appear to be valued by most e-commerce customers. In addition, marketers must, as always, compete with rivals for the attention of their target clients if they are to succeed in the commercial world. And for this reason, sales and marketing need data science. Technology has advanced significantly in the previous ten to fifteen years and particularly in the area of data science. With such a vast quantity of data at our fingertips, using it for marketing initiatives is only logical. Businesses won't require many data scientists and analysts now to produce knowledge on their target market.
+
+A lot of automation and machine learning algorithms make it possible to examine a lot of data in a very short amount of time. The use of data analytics in marketing is no longer a distant possibility. These techniques are already being used by many large businesses to increase sales. Businesses will fall far behind those that seize this chance if they do not start doing so right away. Businesses may use strong marketing techniques and data science to better understand the wants and desires of their consumers and draw in new ones.
+
+## Problem statement
+
+Business want to understand the customer behaviors to perform the campaigns and advertising to increase the customer base and to check the loyal customers.
+
+1.  Which age group has the highest earnings and spendings?
+2.  Is there any correlation between income earned and spending?
+
+## Design and Implementation
+
+### Data Preparation
+
+Data is fetched from a kaggle to github and read the data in R by using the github link. Data opted is related to perform customer segmentation with two hundred rows and five columns with two categorical columns(Age, Gender) and three numerical columns(CustomerID, Annual Income, Spending Score) with CustomerID as primary key.
+
+```{r,echo = FALSE}
+install.packages('dplyr',repos = "http://cran.us.r-project.org")
+install.packages('ggplot2',repos = "http://cran.us.r-project.org")
+library(dplyr)
+library(ggplot2)##
+```
+
+```{r}
+# reading the data from github
+customer_data=read.csv("https://raw.githubusercontent.com/sriram8113/Data-Science-as-field/main/Mall_Customers.csv")
+```
+
+```{r}
+#sample Represntation of Data
+head(customer_data)
+```
+
+```{r}
+#structure of the data
+
+str(customer_data)
+```
+
+```{r}
+#Displaying names of the columns
+
+names(customer_data)
+```
+
+```{r}
+#selcting required columns for further analysis
+
+numerical_customer_columns_data = customer_data%>%select('Age','Annual.Income..k..','Spending.Score..1.100.')
+
+```
+
+```{r}
+#sample representation of numerical data
+head(numerical_customer_columns_data)
+```
+
+```{r}
+#summary of numerical data
+summary_numerical = apply(numerical_customer_columns_data, 2, summary)
+summary_numerical
+```
+
+```{r}
+#standard Deviation of numerical columns
+apply(numerical_customer_columns_data, 2, sd)
+```
+
+```{r}
+#summary of total data
+summary(customer_data)
+```
+
+### Data Pre-Processing
+
+Pre-processing of data is a mandatory process after getting any data. In this report, data cleansing techniques such as finding the missing, NA values, outlier verification are performed. One outlier could be found in the numerical data and removed the outlier in the data and plotted the charts to verify the difference.
+
+#### Data Cleansing
+
+```{r}
+#checking for Na values
+
+which(is.na(customer_data))
+```
+
+we can see that there are no Na values in the data.
+
+```{r}
+sum(is.na(customer_data))
+```
+
+```{r}
+#Dimensions of the data
+
+dim(customer_data)
+```
+
+```{r}
+#Selecting unique rows
+
+customer_data1<- customer_data%>% distinct()
+dim(customer_data1)
+ 
+
+```
+
+we can see that there are no duplicated values
+
+**Outlier validation**
+
+```{r}
+
+dim(customer_data)
+ 
+quartiles <- quantile(customer_data$Annual.Income..k.., probs=c(.25, .75), na.rm = FALSE)
+IQR <- IQR(customer_data$Annual.Income..k..)
+ 
+Lower <- quartiles[1] - 1.5*IQR
+Upper <- quartiles[2] + 1.5*IQR 
+ 
+customer_data <- subset(customer_data, customer_data$Annual.Income..k.. > Lower & customer_data$Annual.Income..k.. < Upper)
+ 
+dim(customer_data)
+```
+
+```{r}
+#Boxplot
+
+boxplot(numerical_customer_columns_data, col = "red", main  = 'Boxplot of Numerical Data')
+```
+
+```{r}
+#Boxplot 
+boxplot(customer_data[,3:5], main = "Boxplot of Numerical Data", col = 'Blue')
+```
+
+```{r}
+#plotting all the data together.
+plot(customer_data)
+```
+
+#### Data Transformation
+
+Transformation of data plays a vital role in structuring the data by using few techniques such as such as normalization, attribute selection, and feature selection.
+
+```{r}
+#mean 
+means = apply(numerical_customer_columns_data, 2, mean)
+```
+
+```{r}
+#standard deviation 
+sds = apply(numerical_customer_columns_data, 2, sd)
+```
+
+```{r}
+#sample representation of normalised data
+
+normalised_numerical_customer_data  =  scale(numerical_customer_columns_data,center=means,scale=sds)
+head(normalised_numerical_customer_data)
+```
+
+#### Analysis of Data using Visualizations
+
+The below code represents the various scatter plots with the combination of multiple numerical columns. Exploratory data analysis such as uni-variate analysis for the Age, Gender and bivariate analysis for the annual income, spending score versus age
+
+```{r}
+#scatter plot
+plot(customer_data$Age, col = "red", lwd = 10,main = "Scatterplot Of Age")
+```
+
+```{r}
+#Scatter plot
+plot(customer_data$Age~customer_data$Annual.Income..k.., col = 'blue')
+title(main ='Annual Income Vs Age')
+```
+
+```{r}
+#Scatter plot 
+
+plot(customer_data$Annual.Income..k..~customer_data$Spending.Score..1.100.)
+title(main ='Annual Income Vs Spending score')
+```
+
+Below code shows the charts of the individual columns spread and distribution. Bar plot shows the number of customers in each gender in the data set.
+
+```{r}
+#Barplot reprenting gender
+
+barplot(table(customer_data$Gender),main=" Gender",
+        ylab="Count",
+        xlab="Gender",
+        col=rainbow(2),
+        legend=rownames(customer_data$Gender))
+```
+
+```{r}
+#Pie chart
+install.packages('plotrix', repos = "http://cran.us.r-project.org")
+percentage=round(table(customer_data$Gender)/sum(table(customer_data$Gender))*100)
+labels_gender=paste(c("Female","Male")," ",percentage,"%",sep=" ")
+library(plotrix)
+pie3D(table(customer_data$Gender), main="Pie Chart  of Female and Male", labels = labels_gender )
+```
+
+From the above two charts, it can be concluded that female customers are more in number than the male customers.
+
+```{r}
+#Histogram of Age 
+
+ggplot(customer_data,aes(x= Age, fill=Gender))+geom_histogram(bins = 50)+ggtitle('Distribution of Age')
+```
+
+From the above histogram,
+
+1.  with increase in the age number of customers decreased.
+
+2.  Maximum number of customers are in the age between 30 and 40years.
+
+```{r}
+ggplot(customer_data,aes(x= `Spending.Score..1.100.`, col=Gender)) + geom_freqpoly(bins=50)+ggtitle('Distribution of Spending Score')
+```
+
+From the above chart, it can be seen spending of women are higher than the male.
+
+```{r}
+# Kernal Density Plot
+install.packages('kdensity', repos = "http://cran.us.r-project.org")
+library(kdensity)
+KDE_age <- kdensity(x=customer_data$Age, kernel = 'gaussian')
+plot(KDE_age)
+
+```
+
+From the above Gaussian distribution, highest density is in the range of 30 to 40 so we can say that there are more number of customers in the same age range.
+
+```{r, echo=TRUE}
+#Density plot
+
+plot(density(customer_data$Annual.Income..k..),
+     col="yellow",
+     main="Annual Income",
+     xlab="Annual Income",
+     )
+polygon(density(customer_data$Annual.Income..k..),
+        col="blue")
+```
+
+from the above density graph, it shows the maximum customers annual income ranges between \$50K - \$100K.
+
+```{r}
+install.packages('GGally', repos ="http://cran.us.r-project.org")
+library(GGally)
+ggpairs(numerical_customer_columns_data)
+```
+
+from the above graph, we can conclude:
+
+1.  correlation between annual income and Age: Negative
+
+2.  correlation between spending scores and Age: Negative
+
+3.  correlation between spending scores and annual income: Positive
+
+```{r}
+new_data <- data.frame(customer_data)
+new_data$Age1 <-cut(new_data$Age, seq(10,70,10))
+head(new_data)
+```
+
+Created a new column named Age1 for further analysis.
+
+```{r}
+Groupby_age_data <- new_data %>% group_by(Age1)%>%summarise(total_spendings = sum(Spending.Score..1.100.),total_Earnings = sum(Annual.Income..k..))
+Groupby_age_data
+```
+
+Above table clearly shows that:
+
+1.  Age group between 30,40 has the highest spending and earnings.
+
+2.  Age group between 60,70 has the lowest spending and earnings.
+
+```{r}
+ggplot(Groupby_age_data,aes(x= total_Earnings, fill=
+Age1))+geom_histogram()+ggtitle('Earnings of Age Groups')
+```
+
+Above chart shows that with with age 30 to 40(green color bar) shows the total highest earnings.
+
+```{r}
+ggplot(Groupby_age_data,aes(x= total_spendings, fill=
+Age1))+geom_histogram()+ggtitle('spendings of Age Groups')
+```
+
+```{r}
+ggplot(numerical_customer_columns_data, aes(x =Annual.Income..k..)) +
+geom_point(aes(y = Spending.Score..1.100.))+geom_line(aes(y = Spending.Score..1.100.))
+```
+
+### Data Modelling
+
+#### K-means Clustering
+
+When an unlabeled data is available its always suggestible to go ahead with the unsupervised ML model. K-means clustering is one of the models opted here in order to generate the different clusters. Silhouette method, is used here to find the number of clusters and found that K=6.
+
+#### Finding optimal no of clusters
+
+```{r}
+install.packages('NbClust',repos = "http://cran.us.r-project.org")
+install.packages('factoextra',repos = "http://cran.us.r-project.org")
+library(NbClust)
+library(factoextra)
+fviz_nbclust(customer_data[,3:5], kmeans, method = "silhouette")
+```
+
+```{r}
+fviz_nbclust(customer_data[,3:5], kmeans, method = "wss")
+```
+
+```{r}
+fviz_nbclust(customer_data[,3:5], kmeans, method = "gap_stat")
+```
+
+#### From these 3 methods we can see that the optimal no of clusters are 6.
+
+```{r}
+#Applying kmeans to the data with 6 clusters 
+
+kmeans_6cluters <- kmeans(customer_data[,3:5],6)
+kmeans_6cluters
+```
+
+```{r}
+install.packages("ggpubr", repos = "https://cloud.r-project.org/", dependencies = TRUE)
+library(ggpubr)
+fviz_cluster(kmeans_6cluters, data = customer_data[,3:5],geom = "point")
+```
+
+Here we can see the formation of 6 clusters.
+
+```{r}
+kmeans_cluster_data <- data.frame(Cluster = kmeans_6cluters$cluster, customer_data[,3:5])
+head(kmeans_cluster_data)
+```
+
+```{r}
+#Sizes of the clusters 
+kmeans_6cluters$size
+```
+
+```{r}
+#Centres of the clusters
+kmeans_6cluters$centers
+```
+
+```{r}
+names(kmeans_cluster_data)
+```
+
+```{r}
+ggplot() +
+  geom_point(data = kmeans_cluster_data,mapping = aes(x = Age, y = Annual.Income..k.., color = Cluster))
+```
+
+```{r}
+ggplot() +
+  geom_point(data = kmeans_cluster_data,mapping = aes( x = Annual.Income..k.., y = Spending.Score..1.100., color = Cluster))
+```
+
+\
+The `echo: false` option disables the printing of code (only output is displayed).
+
+## Bias
+
+In general case scenarios, it is assumed that people with highest income will have the highest spending, but from the above analysis it shows that there is no such correlation between income earnings and spending.
+
+## Conclusion
+
+It is clearly proved that customer segmentation in marketing domain can be easily performed by the unsupervised learning to personalize marketing campaigns and advertisements more effectively. This report gives the step-by-step process of cleaning, transforming and analyzing the data in targeting and prioritizing the best customer segments. It also depends on what kind of data is being used.
+
+By performing the best customer segmentation process, the impact on various domains of the organisation such as marketing, advertising and customer services is immense. By executing the customer segmentation, the organizations focuses on segments rather every customer individuals.
+
+```{r}
+sessionInfo()
+```
